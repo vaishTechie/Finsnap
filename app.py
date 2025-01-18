@@ -4,6 +4,7 @@ from flask import Flask, render_template, jsonify
 import requests
 from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
+from gensim.summarization import summarize
 
 
 
@@ -24,6 +25,14 @@ def make_request(url, headers=None):
     except Exception as e:
         print(f"Error fetching URL {url}: {str(e)}")
         return None
+from gensim.summarization import summarize
+
+def summarize_article_gensim(content, word_count=100):
+    """
+    Summarizes the article using Gensim's TextRank algorithm.
+    """
+    return summarize(content, word_count=word_count)
+
 
 # News18 Scraper Functions
 def scrape_article_content(article_url):
@@ -47,21 +56,20 @@ def scrape_article_content(article_url):
 
 def scrape_news18_articles():
     url = "https://www.news18.com/business/economy/"
-    response = requests.get(url, timeout=10)  # Timeout after 10 seconds
+    response = requests.get(url)
     soup = BeautifulSoup(response.content, "html.parser")
 
     blog_list = soup.find_all("div", class_="jsx-50600299959a4159 blog_list_row")
     articles = []
 
-    for blog in blog_list[:5]:  # Limit to 5 articles
+    for blog in blog_list[:8]:  # Limit to 8 articles
         headline = blog.find("h3", class_="jsx-50600299959a4159").text.strip()
         link = blog.find("a", class_="jsx-50600299959a4159")["href"]
 
         article_content, article_time, article_image = scrape_article_content(link)
 
         if article_content:
-            # Temporarily removing summarization for testing performance
-            summary = article_content[:200]  # Just use the first 200 characters for the summary
+            summary = summarize_article_gensim(article_content)  # Use Gensim summarizer
             articles.append({
                 "headline": headline,
                 "link": link,
@@ -72,6 +80,7 @@ def scrape_news18_articles():
             })
 
     return articles
+
 # Flask Route to serve all scraped data
 @app.route('/')
 def index():
