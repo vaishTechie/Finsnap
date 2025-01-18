@@ -5,6 +5,7 @@ from fake_useragent import UserAgent
 from dotenv import load_dotenv
 from concurrent.futures import ThreadPoolExecutor
 import os
+import nltk
 
 # Load environment variables from .env
 load_dotenv()
