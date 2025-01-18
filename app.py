@@ -1,3 +1,5 @@
+import os
+import nltk
 from flask import Flask, render_template, jsonify
 import requests
 from bs4 import BeautifulSoup
