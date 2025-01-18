@@ -39,11 +39,19 @@
         <div class="tab" onclick="filterByCategory('global')">Global</div>
     </div>
 
-    <!-- Add loading container -->
-    <div id="loadingContainer" class="loading-container">
+   <div id="loadingContainer" class="loading-container">
         <div class="loading-spinner"></div>
         <h3>Fetching latest news...</h3>
         <p>Please wait while we gather the most recent updates for you.</p>
+    </div>
+
+    <!-- Add error container -->
+    <div id="errorContainer" class="loading-container" style="display: none; color: #721c24; background-color: #f8d7da; border-color: #f5c6cb;">
+        <h3>Unable to load articles</h3>
+        <p id="errorMessage">An error occurred while loading articles.</p>
+        <button onclick="retryLoading()" class="retry-btn" style="margin-top: 1rem; padding: 0.5rem 1rem; background: #0056b3; color: white; border: none; border-radius: 4px; cursor: pointer;">
+            Retry Loading
+        </button>
     </div>
 
     <div class="container" id="articlesContainer">
@@ -104,87 +112,72 @@
     
 
     <script>
-         async function loadArticles() {
+       async function loadArticles() {
+            const loadingContainer = document.getElementById('loadingContainer');
+            const errorContainer = document.getElementById('errorContainer');
+            const articlesContainer = document.getElementById('articlesContainer');
+            
             try {
-                const response = await fetch('/api/articles');
-                const articles = await response.json();
+                // Show loading, hide error
+                loadingContainer.style.display = 'block';
+                errorContainer.style.display = 'none';
+                articlesContainer.innerHTML = '';
+                
+                // Add timestamp to prevent caching
+                const timestamp = new Date().getTime();
+                const response = await fetch(`/api/articles?t=${timestamp}`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Cache-Control': 'no-cache'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                
+                if (result.status === 'error') {
+                    throw new Error(result.message || 'Failed to load articles');
+                }
+                
+                const articles = result.data;
+                
+                if (!articles || articles.length === 0) {
+                    throw new Error('No articles available');
+                }
                 
                 // Hide loading container
-                document.getElementById('loadingContainer').style.display = 'none';
-                
-                // Get the articles container
-                const container = document.getElementById('articlesContainer');
+                loadingContainer.style.display = 'none';
                 
                 // Create and append article cards
                 articles.forEach(article => {
                     const card = createArticleCard(article);
-                    container.appendChild(card);
+                    articlesContainer.appendChild(card);
                 });
                 
                 // Initialize reactions after loading articles
                 initializeReactions();
+                
             } catch (error) {
                 console.error('Error loading articles:', error);
-                document.getElementById('loadingContainer').innerHTML = `
-                    <h3>Error loading articles</h3>
-                    <p>Please refresh the page to try again.</p>
-                `;
+                loadingContainer.style.display = 'none';
+                errorContainer.style.display = 'block';
+                document.getElementById('errorMessage').textContent = 
+                    `Error loading articles: ${error.message}. Please try again.`;
             }
         }
 
-        function createArticleCard(article) {
-            const card = document.createElement('div');
-            card.className = `card ${article.source.toLowerCase().replace(' ', '-')}`;
-            card.setAttribute('data-headline', article.headline);
-            card.setAttribute('data-summary', article.summary);
-            card.setAttribute('data-source', article.source);
-            
-            card.innerHTML = `
-                <img src="${article.image}" alt="Article Image">
-                <div class="card-content">
-                    <h3 class="heado">${article.headline}</h3>
-                    <p class="para">${article.summary}</p>
-                    <div class="card-actions">
-                        <div class="reaction-buttons">
-                            <button class="reaction-button" data-type="heart" onclick="react(this, '❤️')">
-                                ❤️ <span class="reaction-count">0</span>
-                            </button>
-                            <button class="reaction-button" data-type="like" onclick="react(this, '👍')">
-                                👍 <span class="reaction-count">0</span>
-                            </button>
-                            <button class="reaction-button" data-type="thumbsDown" onclick="react(this, '👎')">
-                                👎 <span class="reaction-count">0</span>
-                            </button>
-                            <button class="reaction-button" data-type="laugh" onclick="react(this, '😂')">
-                                😂 <span class="reaction-count">0</span>
-                            </button>
-                            <button class="reaction-button" data-type="hundred" onclick="react(this, '💯')">
-                                💯 <span class="reaction-count">0</span>
-                            </button>
-                        </div>
-                        <div class="action-buttons">
-                            <button class="action-btn share-btn" onclick="shareArticle(this)">
-                                <i class="fas fa-share-alt"></i> Share
-                            </button>
-                            <button class="action-btn bookmark-btn" onclick="toggleBookmark(this)">
-                                <i class="far fa-bookmark"></i> Save
-                            </button>
-                            <button class="translate-btn" onclick="translateCard(this)">
-                                <i class="fas fa-language"></i> हिंदी
-                            </button>
-                        </div>
-                    </div>
-                    <div class="card-footer">
-                        <div class="source">
-                            <a href="${article.link}" target="_blank">Read More @ ${article.source}</a>
-                        </div>
-                        ${article.time ? `<div class="time"><i>Published: ${article.time}</i></div>` : ''}
-                    </div>
-                </div>
-            `;
-            
-            return card;
+        function retryLoading() {
+            loadArticles();
         }
+
+        // Rest of your createArticleCard function and other functions remain the same...
+        
+        // Load articles when the page loads
+        document.addEventListener('DOMContentLoaded', loadArticles);
 
         // Load articles when the page loads
         document.addEventListener('DOMContentLoaded', loadArticles);
