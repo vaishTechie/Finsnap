@@ -253,10 +253,12 @@ function createArticleCard(article) {
 
 // Search and Filter Functions
 function searchArticles() {
-    const query = document.getElementById("searchBar").value.toLowerCase();
-    const articles = document.querySelectorAll(".card");
+    var query = document.getElementById("searchBar").value.toLowerCase();
+    var articles = document.querySelectorAll(".card");
 
+    // Check if the query is empty
     if (query.trim() === "") {
+        // If the query is empty, show all articles and remove any highlights
         articles.forEach(function(card) {
             card.style.display = "flex";
             removeHighlights(card.querySelector("h3"));
@@ -266,12 +268,14 @@ function searchArticles() {
     }
 
     articles.forEach(function(card) {
-        const headline = card.getAttribute("data-headline").toLowerCase();
-        const summary = card.getAttribute("data-summary").toLowerCase();
+        var headline = card.getAttribute("data-headline").toLowerCase();
+        var summary = card.getAttribute("data-summary").toLowerCase();
 
+        // Remove any existing highlights
         removeHighlights(card.querySelector("h3"));
         removeHighlights(card.querySelector("p"));
 
+        // Check if the query matches the headline or summary
         if (headline.includes(query) || summary.includes(query)) {
             card.style.display = "flex";
             highlightText(card.querySelector("h3"), query);
@@ -283,15 +287,15 @@ function searchArticles() {
 }
 
 function highlightText(element, query) {
-    if (!element) return;
-    const text = element.textContent || element.innerText;
-    const regex = new RegExp('(' + query + ')', 'gi');
-    const highlightedText = text.replace(regex, '<span class="highlight">$1</span>');
+    var text = element.textContent || element.innerText;
+    var regex = new RegExp('(' + query + ')', 'gi');
+    var highlightedText = text.replace(regex, '<span class="highlight">$1</span>');
     element.innerHTML = highlightedText;
 }
 
 function removeHighlights(element) {
     if (element) {
+        // Remove any highlight spans
         element.innerHTML = element.textContent || element.innerText;
     }
 }
@@ -434,6 +438,7 @@ function react(button, emoji) {
 
 function createFloatingEffect(card, emoji, count) {
     const cardRect = card.getBoundingClientRect();
+    const effectContainer = card;
     
     for (let i = 0; i < count; i++) {
         setTimeout(() => {
@@ -441,18 +446,28 @@ function createFloatingEffect(card, emoji, count) {
             effect.className = 'reaction-effect';
             effect.textContent = emoji;
             
+            // Random starting position across the bottom of the card
             const startX = Math.random() * (cardRect.width - 40);
+            const startY = cardRect.height - 60;
+            
+            // Random horizontal drift
+            const drift = (Math.random() - 0.5) * 100;
+            
             effect.style.left = `${startX}px`;
             effect.style.bottom = '60px';
             
+            // Add some random rotation and scaling variation
             const rotation = (Math.random() - 0.5) * 30;
             const scale = 0.8 + Math.random() * 0.4;
+            const duration = 1 + Math.random() * 0.5;
             
+            effect.style.animation = `floatUpAndFade ${duration}s ease-out forwards`;
             effect.style.transform = `rotate(${rotation}deg) scale(${scale})`;
             
-            card.appendChild(effect);
+            effectContainer.appendChild(effect);
             
-            setTimeout(() => effect.remove(), 1000);
+            // Remove the element after animation
+            setTimeout(() => effect.remove(), duration * 1000);
         }, i * 100);
     }
 }
@@ -468,8 +483,10 @@ function shareArticle(button) {
             title: headline,
             text: summary,
             url: window.location.href
-        }).catch(console.error);
+        })
+        .catch(console.error);
     } else {
+        // Fallback for browsers that don't support Web Share API
         const dummy = document.createElement('textarea');
         dummy.value = `${headline}\n\n${summary}\n\n${window.location.href}`;
         document.body.appendChild(dummy);
@@ -497,15 +514,30 @@ function translateCard(button) {
     const summary = card.querySelector('p');
     
     if (!card.dataset.translated) {
-        // In a real app, you would use a translation API here
-        alert('Translation functionality would be implemented with a real translation API');
-        button.textContent = 'English';
-        card.dataset.translated = 'true';
+        // This is a simplified version. In a real app, you'd want to use a translation API
+        fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=hi&dt=t&q=${encodeURIComponent(headline.textContent + '. ' + summary.textContent)}`)
+            .then(response => response.json())
+            .then(data => {
+                const translatedText = data[0].map(x => x[0]).join(' ');
+                const [translatedHeadline, ...translatedSummaryParts] = translatedText.split('।');
+                
+                headline.dataset.original = headline.textContent;
+                summary.dataset.original = summary.textContent;
+                
+                headline.textContent = translatedHeadline;
+                summary.textContent = translatedSummaryParts.join('।');
+                
+                card.dataset.translated = 'true';
+                button.textContent = 'English';
+            });
     } else {
-        button.textContent = 'हिंदी';
+        headline.textContent = headline.dataset.original;
+        summary.textContent = summary.dataset.original;
         delete card.dataset.translated;
+        button.textContent = 'हिंदी';
     }
 }
+
 
 function retryLoading() {
     loadArticles();
