@@ -3,6 +3,7 @@ from flask import Flask, render_template
 from hindu2 import fetch_thehindu_headlines
 from mint__scraper import MintScraper
 from news18_scraper import scrape_news18_articles
+import nltk
 from financial_scraper import scrape_financial_news
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 5000))
