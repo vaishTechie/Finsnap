@@ -10,6 +10,13 @@ from sumy.summarizers.lex_rank import LexRankSummarizer
 from sumy.summarizers.lsa import LsaSummarizer
 from sumy.utils import get_stop_words
 import random
+import nltk
+
+
+# Download required NLTK data
+nltk.download('punkt_tab')
+nltk.download('punkt')
+nltk.download('stopwords')
 
 
 
@@ -376,6 +383,3 @@ def index():
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
-
-if __name__ == "__main__":
-    app.run(debug=True)
