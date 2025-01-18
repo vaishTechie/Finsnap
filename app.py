@@ -5,13 +5,6 @@ import requests
 from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
 
-
-
-
-
-
-
-
 app = Flask(__name__)
 
 # Helper function to make requests and parse HTML
@@ -26,14 +19,9 @@ def make_request(url, headers=None):
         print(f"Error fetching URL {url}: {str(e)}")
         return None
 
-def summarize_article_gensim(content, word_count=100):
-    """
-    Summarizes the article using Gensim's TextRank algorithm.
-    """
-    return summarize(content, word_count=word_count)
-
-
-
+# Simple summarizer: Truncate the content to the first 500 characters
+def summarize_article_simple(content, char_limit=500):
+    return content[:char_limit]
 
 # News18 Scraper Functions
 def scrape_article_content(article_url):
@@ -70,7 +58,7 @@ def scrape_news18_articles():
         article_content, article_time, article_image = scrape_article_content(link)
 
         if article_content:
-             summary = summarize_article_gensim(article_content)  # Use Gensim summarizer
+            summary = summarize_article_simple(article_content)  # Use simple truncation summarizer
             articles.append({
                 "headline": headline,
                 "link": link,
@@ -82,16 +70,77 @@ def scrape_news18_articles():
 
     return articles
 
+# Mint Scraper (no summary logic used)
+class MintScraper:
+    def __init__(self):
+        self.ua = UserAgent()
+        self.headers = {"User-Agent": self.ua.random}
+        self.source_name = "LiveMint"
+
+    def scrape_mint(self):
+        url = "https://www.livemint.com/economy"
+        articles = self._scrape_generic(url, "div", "listingNew", "h2", "a", prefix="https://www.livemint.com")
+        return articles
+
+    def _scrape_generic(self, url, parent_tag, parent_class, title_tag, link_tag, prefix=""):
+        response = requests.get(url, headers=self.headers)
+        soup = BeautifulSoup(response.content, "html.parser")
+        articles = []
+
+        if response.status_code == 403:
+            print(f"Access denied when trying to scrape {url}.")
+            return articles
+
+        for item in soup.find_all(parent_tag, class_=parent_class)[:7]:
+            title_elem = item.find(title_tag)
+            link_elem = item.find(link_tag, href=True)
+            time_elem = item.find("span", {"id": lambda x: x and x.startswith("tListBox_")})  # Extract updated time
+            image_elem = item.find("figure")  # Find the figure tag for the image
+
+            if title_elem and link_elem:
+                headline = title_elem.text.strip()
+                link = prefix + link_elem["href"] if prefix else link_elem["href"]
+                time = time_elem.text.strip() if time_elem else "Unknown time"
+                image = self.scrape_image(link)  # Scrape image for each article
+
+                articles.append({
+                    "headline": headline,
+                    "link": link,
+                    "time": time,
+                    "summary": "",  # No summary logic used here
+                    "source": self.source_name,
+                    "image": image
+                })
+
+        return articles
+
+    def scrape_image(self, url):
+        response = requests.get(url, headers=self.headers)
+        soup = BeautifulSoup(response.content, "html.parser")
+        figure_tag = soup.find("figure")
+        if figure_tag:
+            img_tag = figure_tag.find("img")
+            if img_tag:
+                return img_tag.get("src")
+        return None
+
 # Flask Route to serve all scraped data
 @app.route('/')
 def index():
-    # Fetch articles from News18
+    # Fetch articles from News18 and LiveMint
     news18_articles = scrape_news18_articles()
+    mint_scraper = MintScraper()
+    mint_articles = mint_scraper.scrape_mint()
+
+    # Combine articles from both sources
+    all_articles = news18_articles + mint_articles
 
     # Render the HTML template and pass the articles to it
-    return render_template('index.html', articles=news18_articles)
+    return render_template('index.html', articles=all_articles)
 
 
 if __name__ == "__main__":
     app.run(debug=True)
+
+
 
