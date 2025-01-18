@@ -15,7 +15,7 @@ from functools import wraps
 import nltk
 
 # Download required NLTK data
-nltk.download('punkt')
+nltk.download('punkt_tab')
 nltk.download('stopwords')
 
 # Increase recursion limit
