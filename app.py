@@ -26,6 +26,12 @@ def make_request(url, headers=None):
         print(f"Error fetching URL {url}: {str(e)}")
         return None
 
+def summarize_article_gensim(content, word_count=100):
+    """
+    Summarizes the article using Gensim's TextRank algorithm.
+    """
+    return summarize(content, word_count=word_count)
+
 
 
 
@@ -64,7 +70,7 @@ def scrape_news18_articles():
         article_content, article_time, article_image = scrape_article_content(link)
 
         if article_content:
-            summary = article_content[:200]  # Use Gensim summarizer
+             summary = summarize_article_gensim(article_content)  # Use Gensim summarizer
             articles.append({
                 "headline": headline,
                 "link": link,
