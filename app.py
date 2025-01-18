@@ -4,7 +4,7 @@ from hindu2 import fetch_thehindu_headlines
 from mint__scraper import MintScraper
 from news18_scraper import scrape_news18_articles
 from financial_scraper import scrape_financial_news
-if _name_ == "_main_":
+if __name__ == "__main__":
     port = int(os.getenv("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
 
