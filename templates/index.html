@@ -24,7 +24,7 @@
     </div>
 
 
-    <h1 class="heading">FinSnap</h1>
+   <h1 class="heading">FinSnap</h1>
 
     <div class="search-container">
         <input type="text" id="searchBar" class="search-bar" placeholder="Search articles..." onkeyup="searchArticles()">
@@ -39,57 +39,15 @@
         <div class="tab" onclick="filterByCategory('global')">Global</div>
     </div>
 
+    <!-- Add loading container -->
+    <div id="loadingContainer" class="loading-container">
+        <div class="loading-spinner"></div>
+        <h3>Fetching latest news...</h3>
+        <p>Please wait while we gather the most recent updates for you.</p>
+    </div>
+
     <div class="container" id="articlesContainer">
-        {% for article in articles %}
-        <div class="card {{ article['source'].lower().replace(' ', '-') }}" data-headline="{{ article['headline'] }}" data-summary="{{ article['summary'] }}" data-source="{{ article['source'] }}">
-            <img src="{{ article['image'] }}" alt="Article Image">
-            <div class="card-content">
-                <h3 class="heado">{{ article['headline'] }}</h3>
-                <p class="para">{{ article['summary'] }}</p>
-                <div class="card-actions">
-                    <div class="reaction-buttons">
-                        <button class="reaction-button" data-type="heart" onclick="react(this, '❤️')">
-                            ❤️ <span class="reaction-count">0</span>
-                        </button>
-                        <button class="reaction-button" data-type="like" onclick="react(this, '👍')">
-                            👍 <span class="reaction-count">0</span>
-                        </button>
-                         <button class="reaction-button" data-type="thumbsDown" onclick="react(this, '👎')">
-        👎 <span class="reaction-count">0</span>
-    </button>
-    <button class="reaction-button" data-type="laugh" onclick="react(this, '😂')">
-        😂 <span class="reaction-count">0</span>
-    </button>
-    <button class="reaction-button" data-type="hundred" onclick="react(this, '💯')">
-        💯 <span class="reaction-count">0</span>
-    </button>
-                        
-                    </div>
-                    <div class="action-buttons">
-                        <button class="action-btn share-btn" onclick="shareArticle(this)">
-                            <i class="fas fa-share-alt"></i> Share
-                        </button>
-                        <button class="action-btn bookmark-btn" onclick="toggleBookmark(this)">
-                            <i class="far fa-bookmark"></i> Save
-                        </button>
-                        <button class="translate-btn" onclick="translateCard(this)">
-                            <i class="fas fa-language"></i> हिंदी
-                        </button>
-                    </div>
-                </div>
-                <div class="card-footer">
-                    <div class="source">
-                        <a href="{{ article['link'] }}" target="_blank">Read More @ </a>
-                    </div>
-                    {% if article['time'] %}
-                    <div class="time">
-                        <i>Published: {{ article['time'] }}</i>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-        {% endfor %}
+        
     </div>
 
     <div class="back-button" id="backButton">
@@ -146,6 +104,90 @@
     
 
     <script>
+         async function loadArticles() {
+            try {
+                const response = await fetch('/api/articles');
+                const articles = await response.json();
+                
+                // Hide loading container
+                document.getElementById('loadingContainer').style.display = 'none';
+                
+                // Get the articles container
+                const container = document.getElementById('articlesContainer');
+                
+                // Create and append article cards
+                articles.forEach(article => {
+                    const card = createArticleCard(article);
+                    container.appendChild(card);
+                });
+                
+                // Initialize reactions after loading articles
+                initializeReactions();
+            } catch (error) {
+                console.error('Error loading articles:', error);
+                document.getElementById('loadingContainer').innerHTML = `
+                    <h3>Error loading articles</h3>
+                    <p>Please refresh the page to try again.</p>
+                `;
+            }
+        }
+
+        function createArticleCard(article) {
+            const card = document.createElement('div');
+            card.className = `card ${article.source.toLowerCase().replace(' ', '-')}`;
+            card.setAttribute('data-headline', article.headline);
+            card.setAttribute('data-summary', article.summary);
+            card.setAttribute('data-source', article.source);
+            
+            card.innerHTML = `
+                <img src="${article.image}" alt="Article Image">
+                <div class="card-content">
+                    <h3 class="heado">${article.headline}</h3>
+                    <p class="para">${article.summary}</p>
+                    <div class="card-actions">
+                        <div class="reaction-buttons">
+                            <button class="reaction-button" data-type="heart" onclick="react(this, '❤️')">
+                                ❤️ <span class="reaction-count">0</span>
+                            </button>
+                            <button class="reaction-button" data-type="like" onclick="react(this, '👍')">
+                                👍 <span class="reaction-count">0</span>
+                            </button>
+                            <button class="reaction-button" data-type="thumbsDown" onclick="react(this, '👎')">
+                                👎 <span class="reaction-count">0</span>
+                            </button>
+                            <button class="reaction-button" data-type="laugh" onclick="react(this, '😂')">
+                                😂 <span class="reaction-count">0</span>
+                            </button>
+                            <button class="reaction-button" data-type="hundred" onclick="react(this, '💯')">
+                                💯 <span class="reaction-count">0</span>
+                            </button>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="action-btn share-btn" onclick="shareArticle(this)">
+                                <i class="fas fa-share-alt"></i> Share
+                            </button>
+                            <button class="action-btn bookmark-btn" onclick="toggleBookmark(this)">
+                                <i class="far fa-bookmark"></i> Save
+                            </button>
+                            <button class="translate-btn" onclick="translateCard(this)">
+                                <i class="fas fa-language"></i> हिंदी
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <div class="source">
+                            <a href="${article.link}" target="_blank">Read More @ ${article.source}</a>
+                        </div>
+                        ${article.time ? `<div class="time"><i>Published: ${article.time}</i></div>` : ''}
+                    </div>
+                </div>
+            `;
+            
+            return card;
+        }
+
+        // Load articles when the page loads
+        document.addEventListener('DOMContentLoaded', loadArticles);
         function setTheme(theme) {
             const buttons = document.querySelectorAll('.theme-btn');
             buttons.forEach(btn => btn.classList.remove('active'));
