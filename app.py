@@ -7,6 +7,28 @@ from sumy.nlp.tokenizers import Tokenizer
 from sumy.summarizers.lex_rank import LexRankSummarizer
 from sumy.summarizers.lsa import LsaSummarizer
 from sumy.utils import get_stop_words
+if __name__ == "__main__":
+    port = int(os.getenv("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
+
+if not os.path.exists(os.path.join(nltk.data.path[0], 'tokenizers/punkt')):
+    nltk.download('punkt')
+
+# Ensure the punkt tokenizer is available
+try:
+    nltk.data.find('tokenizers/punkt')
+except LookupError:
+    nltk.download('punkt')
+
+
+
+
+
+# Ensure you have downloaded the necessary NLTK data files
+nltk.download('punkt')
+nltk.download('stopwords')
+nltk.download('punkt_tab')
+
 
 app = Flask(__name__)
 
