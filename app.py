@@ -19,7 +19,7 @@ import logging
 nltk.download('punkt_tab')
 nltk.download('stopwords')
 logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(_name_)
+logger = logging.getLogger(__name__)
 
 
 # Increase recursion limit
