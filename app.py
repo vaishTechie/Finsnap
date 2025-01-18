@@ -16,6 +16,7 @@ from sumy.utils import get_stop_words
 from functools import wraps
 import nltk
 import logging
+import aiohttp
 
 # Download required NLTK data
 nltk.download('punkt_tab')
