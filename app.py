@@ -17,9 +17,16 @@ import nltk
 # Download required NLTK data
 nltk.download('punkt_tab')
 nltk.download('stopwords')
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(_name_)
+
 
 # Increase recursion limit
 sys.setrecursionlimit(5000)
+if __name__ == "__main__":
+    port = int(os.getenv("PORT", 5000))  # Default to 5000 if PORT is not set
+    app.run(host="0.0.0.0", port=port)
+
 
 app = Flask(__name__)
 
@@ -227,8 +234,8 @@ def index():
 def health_check():
     return jsonify({"status": "healthy"})
 
-import os
+
 
 if __name__ == "__main__":
-    port = int(os.getenv("PORT", 8080))  # Default to 5000 if PORT is not set
-    app.run(host="0.0.0.0", port=port)
+
+    app.run(debug=True)
