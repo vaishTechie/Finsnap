@@ -380,15 +380,6 @@ def index():
 
     # Render the HTML template and pass the articles to it
     return render_template('index.html', articles=all_articles)
-from app import app  # Ensure this points to your Flask app
-
 if __name__ == "__main__":
-    from gunicorn.app.wsgiapp import run
-    import os
-
-    # Default workers and threads
-    os.environ["GUNICORN_CMD_ARGS"] = "--workers=2 --threads=4 --worker-class=gevent"
-
-    # Run Gunicorn
-    run()
-
+    port = int(os.getenv("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
