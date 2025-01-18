@@ -15,6 +15,9 @@ from functools import wraps
 import nltk
 import logging
 from concurrent.futures import ThreadPoolExecutor
+from news18_scraper import scrape_news18_articles
+from hindu2.py import fetch_thehindu_headlines
+from financial_scraper import  scrape_financial_news
 
 # Download required NLTK data
 nltk.download('punkt_tab')
