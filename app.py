@@ -172,19 +172,26 @@ def scrape_mint_articles():
     return articles
 
 # Flask Routes
+@app.route('/api/articles')
+def get_articles():
+    try:
+        # Fetch articles from all sources
+        news18_articles = scrape_news18_articles()
+        financial_articles = scrape_financial_articles()
+        mint_articles = scrape_mint_articles()
+        
+        # Combine all articles
+        all_articles = news18_articles + financial_articles + mint_articles
+        
+        # Return JSON response
+        return jsonify(all_articles)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/')
 def index():
-    # Fetch articles from all sources
-    news18_articles = scrape_news18_articles()
-    hindu_articles = scrape_hindu_articles()
-    financial_articles = scrape_financial_articles()
-    mint_articles = scrape_mint_articles()
-    
-    # Combine all articles
-    all_articles = news18_articles + hindu_articles + financial_articles + mint_articles
-    
-    # Render the HTML template with all articles
-    return render_template('index.html', articles=all_articles)
+    # Just render the template without articles
+    return render_template('index.html')
 
 if __name__ == "__main__":
     app.run(debug=True)
