@@ -4,7 +4,7 @@ from flask import Flask, render_template, jsonify
 import requests
 from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
-from gensim.summarization import summarize
+
 
 
 
@@ -25,13 +25,8 @@ def make_request(url, headers=None):
     except Exception as e:
         print(f"Error fetching URL {url}: {str(e)}")
         return None
-from gensim.summarization import summarize
 
-def summarize_article_gensim(content, word_count=100):
-    """
-    Summarizes the article using Gensim's TextRank algorithm.
-    """
-    return summarize(content, word_count=word_count)
+
 
 
 # News18 Scraper Functions
@@ -69,7 +64,7 @@ def scrape_news18_articles():
         article_content, article_time, article_image = scrape_article_content(link)
 
         if article_content:
-            summary = summarize_article_gensim(article_content)  # Use Gensim summarizer
+            summary = article_content[:200]  # Use Gensim summarizer
             articles.append({
                 "headline": headline,
                 "link": link,
