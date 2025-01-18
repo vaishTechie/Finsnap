@@ -3,7 +3,9 @@ import sys
 import time
 import random
 from flask import Flask, jsonify, render_template
-import requests
+import aiohttp
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
 from sumy.parsers.plaintext import PlaintextParser
@@ -21,14 +23,7 @@ nltk.download('stopwords')
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-
-# Increase recursion limit
-sys.setrecursionlimit(5000)
-if __name__ == "__main__":
-    port = int(os.getenv("PORT", 5000))  # Default to 5000 if PORT is not set
-    app.run(host="0.0.0.0", port=port)
-
-
+# Flask app setup
 app = Flask(__name__)
 
 # Rate Limiter Class
@@ -41,7 +36,7 @@ class RateLimiter:
 
     def __call__(self, func):
         @wraps(func)
-        def wrapper(*args, **kwargs):
+        async def wrapper(*args, **kwargs):
             current_time = time.time()
             
             if current_time - self.last_reset >= self.period:
@@ -51,28 +46,30 @@ class RateLimiter:
             if self.calls_made >= self.calls:
                 time_to_wait = self.period - (current_time - self.last_reset)
                 if time_to_wait > 0:
-                    time.sleep(time_to_wait)
+                    await asyncio.sleep(time_to_wait)
                 self.calls_made = 0
                 self.last_reset = time.time()
 
             self.calls_made += 1
-            return func(*args, **kwargs)
+            return await func(*args, **kwargs)
         return wrapper
 
-# Modified request function with rate limiting
+# Asynchronous request function
 @RateLimiter(calls=1, period=2)
-def make_request(url, headers=None):
+async def make_request(url, headers=None):
     try:
         if headers is None:
             headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"}
-        response = requests.get(url, headers=headers, timeout=10)
-        response.raise_for_status()
-        return BeautifulSoup(response.content, 'html.parser')
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, headers=headers, timeout=10) as response:
+                response.raise_for_status()
+                content = await response.text()
+                return BeautifulSoup(content, 'html.parser')
     except Exception as e:
         print(f"Error fetching URL {url}: {str(e)}")
         return None
 
-# Modified summarization function
+# Summarize article function
 def summarize_article(content):
     try:
         max_content_length = 10000
@@ -101,18 +98,18 @@ class MintScraper:
         self.headers = {"User-Agent": self.ua.random}
         self.source_name = "LiveMint"
 
-    def scrape_mint(self):
+    async def scrape_mint(self):
         try:
             url = "https://www.livemint.com/economy"
-            articles = self._scrape_generic(url, "div", "listingNew", "h2", "a", prefix="https://www.livemint.com")
+            articles = await self._scrape_generic(url, "div", "listingNew", "h2", "a", prefix="https://www.livemint.com")
             return articles
         except Exception as e:
             print(f"Error in Mint scraper: {str(e)}")
             return []
 
-    def _scrape_generic(self, url, parent_tag, parent_class, title_tag, link_tag, prefix=""):
+    async def _scrape_generic(self, url, parent_tag, parent_class, title_tag, link_tag, prefix=""):
         try:
-            soup = make_request(url, self.headers)
+            soup = await make_request(url, self.headers)
             if not soup:
                 return []
 
@@ -127,8 +124,8 @@ class MintScraper:
                         headline = title_elem.text.strip()
                         link = prefix + link_elem["href"] if prefix else link_elem["href"]
                         time = time_elem.text.strip() if time_elem else "Unknown time"
-                        image = self.scrape_image(link)
-                        summary = self.summarize_article(link)['summary']
+                        image = await self.scrape_image(link)
+                        summary = await self.summarize_article(link)
 
                         articles.append({
                             "headline": headline,
@@ -147,9 +144,9 @@ class MintScraper:
             print(f"Error in Mint generic scraper: {str(e)}")
             return []
 
-    def scrape_image(self, url):
+    async def scrape_image(self, url):
         try:
-            soup = make_request(url, self.headers)
+            soup = await make_request(url, self.headers)
             if not soup:
                 return None
 
@@ -163,9 +160,9 @@ class MintScraper:
             print(f"Error scraping image: {str(e)}")
             return None
 
-    def summarize_article(self, url):
+    async def summarize_article(self, url):
         try:
-            soup = make_request(url, self.headers)
+            soup = await make_request(url, self.headers)
             if not soup:
                 return {"content": "", "summary": "Summary not available"}
 
@@ -178,46 +175,36 @@ class MintScraper:
             print(f"Error summarizing article: {str(e)}")
             return {"content": "", "summary": "Error generating summary"}
 
-# Import other scraper functions from their respective files
-from hindu2 import fetch_thehindu_headlines
-from news18_scraper import scrape_news18_articles
-from financial_scraper import scrape_financial_news
+# Function to run multiple scrapers concurrently and in parallel using ThreadPoolExecutor
+async def run_scrapers():
+    loop = asyncio.get_event_loop()
 
-# Error handling decorator
-def handle_errors(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        try:
-            return func(*args, **kwargs)
-        except Exception as e:
-            print(f"Error in {func.__name__}: {str(e)}")
-            return []
-    return wrapper
-
-# Main route with error handling
-@app.route('/')
-def index():
-    try:
-        # Initialize empty lists for articles
-        all_articles = []
-        
-        # Add error handling for each scraper
+    with ThreadPoolExecutor() as executor:
+        # Run each scraper in a separate thread to fetch concurrently
         scrapers = [
-            (MintScraper().scrape_mint, "Mint"),
-            (fetch_thehindu_headlines, "The Hindu"),
-            (scrape_news18_articles, "News18"),
-            (scrape_financial_news, "Financial Express")
+            MintScraper().scrape_mint,
+            fetch_thehindu_headlines,
+            scrape_news18_articles,
+            scrape_financial_news
         ]
         
-        for scraper_func, source_name in scrapers:
-            try:
-                articles = scraper_func()
-                if articles:
-                    all_articles.extend(articles)
-                time.sleep(1)  # Add delay between scrapers
-            except Exception as e:
-                print(f"Error scraping {source_name}: {str(e)}")
-                continue
+        # Run scrapers in parallel using threads
+        tasks = [loop.run_in_executor(executor, scraper) for scraper in scrapers]
+        results = await asyncio.gather(*tasks)
+    
+    return results
+
+# Main route with asynchronous scraping and threading
+@app.route('/')
+async def index():
+    try:
+        # Run scrapers concurrently and in parallel
+        results = await run_scrapers()
+
+        # Flatten the list of articles from each scraper
+        all_articles = []
+        for articles in results:
+            all_articles.extend(articles)
 
         # Return results
         if all_articles:
@@ -232,11 +219,8 @@ def index():
 
 # Health check endpoint
 @app.route('/health')
-def health_check():
+async def health_check():
     return jsonify({"status": "healthy"})
 
-
-
 if __name__ == "__main__":
-
     app.run(debug=True)
