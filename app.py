@@ -24,7 +24,7 @@ def make_request(url, headers=None):
 
 # Scrape article content (helper function)
 def scrape_article_content(article_url):
-    response = requests.get(article_url, timeout=10)  # Timeout after 10 seconds
+    response = requests.get(article_url, timeout=10)
     soup = BeautifulSoup(response.content, "html.parser")
     
     article_content = soup.find("article")
@@ -65,7 +65,69 @@ def scrape_news18_articles():
             })
     return articles
 
-# Fetch articles from The Hindu
+# Fetch article details from The Hindu
+def fetch_article_details(url):
+    try:
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+        
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+
+        soup = BeautifulSoup(response.content, 'html.parser')
+
+        paragraphs = soup.find_all('p')
+        article_content = " ".join([p.get_text(strip=True) for p in paragraphs if p.get_text(strip=True)])
+
+        time_tag = soup.find('div', class_='bl-by-line')
+        time = None
+
+        if time_tag:
+            time_text = time_tag.get_text(strip=True)
+            time = time_text.split('|')[0].strip()
+
+        if not time:
+            time = "No time available"
+
+        return article_content, time
+
+    except Exception as e:
+        print(f"Error fetching article details: {str(e)}")
+        return None, "No time available"
+
+# Fetch image from The Hindu article
+def fetch_image_from_article(url):
+    try:
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+
+        soup = BeautifulSoup(response.content, 'html.parser')
+
+        image_div = soup.find('div', class_='picture-big ratio ratio-16x9')
+        image_url = None
+
+        if image_div:
+            source_tags = image_div.find_all('source')
+            if source_tags:
+                largest_image_url = source_tags[-1].get('srcset')
+
+                if largest_image_url and not largest_image_url.startswith('http'):
+                    largest_image_url = 'https://bl-i.thgim.com' + largest_image_url
+                
+                image_url = largest_image_url
+
+        return image_url
+
+    except Exception as e:
+        print(f"Error fetching image: {str(e)}")
+        return None
+
+# Fetch articles from The Hindu Business Line
 def fetch_thehindu_headlines():
     url = "https://www.thehindubusinessline.com/economy/"
     response = requests.get(url)
