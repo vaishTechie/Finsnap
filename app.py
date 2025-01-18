@@ -22,6 +22,26 @@ def make_request(url, headers=None):
         print(f"Error fetching URL {url}: {str(e)}")
         return None
 
+# Scrape article content (helper function)
+def scrape_article_content(article_url):
+    response = requests.get(article_url, timeout=10)  # Timeout after 10 seconds
+    soup = BeautifulSoup(response.content, "html.parser")
+    
+    article_content = soup.find("article")
+    time = soup.find("time")
+    article_time = time.text.strip() if time else "Unknown"
+    
+    image_tag = article_content.find("figure").find("img") if article_content else None
+    article_image = image_tag["src"] if image_tag else None
+    
+    if article_content:
+        paragraphs = article_content.find_all("p")
+        article_text = "\n".join([para.text.strip() for para in paragraphs])
+        return article_text, article_time, article_image
+    else:
+        print(f"Article content not found for URL: {article_url}")
+        return None, None, None
+
 # Fetch articles from News18
 def scrape_news18_articles():
     url = "https://www.news18.com/business/economy/"
