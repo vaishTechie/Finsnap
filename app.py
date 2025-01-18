@@ -9,7 +9,7 @@ if __name__ == "__main__":
     port = int(os.getenv("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
 
-nltk.download("punkt")
+nltk.download("punkt_tab")
 app = Flask(__name__)
 
 # Fetch articles from all sources
