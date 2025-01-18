@@ -13,6 +13,7 @@ from sumy.summarizers.lsa import LsaSummarizer
 from sumy.utils import get_stop_words
 from functools import wraps
 import nltk
+import logging
 
 # Download required NLTK data
 nltk.download('punkt_tab')
