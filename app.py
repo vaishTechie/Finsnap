@@ -1,12 +1,15 @@
 import os
 import nltk
 from flask import Flask, render_template, jsonify
+from flask_cors import CORS  # Add this import
+import traceback
 import requests
 from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
 import re
 
 app = Flask(__name__)
+CORS(app) 
 
 # Helper function to make requests and parse HTML
 def make_request(url, headers=None):
@@ -175,18 +178,57 @@ def scrape_mint_articles():
 @app.route('/api/articles')
 def get_articles():
     try:
-        # Fetch articles from all sources
-        news18_articles = scrape_news18_articles()
-        financial_articles = scrape_financial_articles()
-        mint_articles = scrape_mint_articles()
+        # Add debug logging
+        print("Starting article fetch...")
+        
+        # Initialize empty lists
+        news18_articles = []
+        financial_articles = []
+        mint_articles = []
+        
+        # Try each scraper independently
+        try:
+            news18_articles = scrape_news18_articles()
+            print(f"Fetched {len(news18_articles)} News18 articles")
+        except Exception as e:
+            print(f"Error scraping News18: {str(e)}")
+            
+        try:
+            financial_articles = scrape_financial_articles()
+            print(f"Fetched {len(financial_articles)} Financial Express articles")
+        except Exception as e:
+            print(f"Error scraping Financial Express: {str(e)}")
+            
+        try:
+            mint_articles = scrape_mint_articles()
+            print(f"Fetched {len(mint_articles)} LiveMint articles")
+        except Exception as e:
+            print(f"Error scraping LiveMint: {str(e)}")
         
         # Combine all articles
         all_articles = news18_articles + financial_articles + mint_articles
         
-        # Return JSON response
-        return jsonify(all_articles)
+        # If no articles were fetched, raise an exception
+        if not all_articles:
+            raise Exception("No articles could be fetched from any source")
+            
+        print(f"Total articles fetched: {len(all_articles)}")
+        
+        # Return JSON response with articles
+        return jsonify({
+            "status": "success",
+            "data": all_articles,
+            "count": len(all_articles)
+        })
+        
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        print(f"Error in get_articles: {str(e)}")
+        print(traceback.format_exc())  # Print full traceback
+        return jsonify({
+            "status": "error",
+            "message": str(e),
+            "details": traceback.format_exc()
+        }), 500
 
 @app.route('/')
 def index():
