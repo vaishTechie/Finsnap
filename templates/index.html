@@ -112,8 +112,7 @@
     
 
     <script>
-        // Theme Management
-function setTheme(theme) {
+       function setTheme(theme) {
     const buttons = document.querySelectorAll('.theme-btn');
     buttons.forEach(btn => btn.classList.remove('active'));
     
@@ -252,156 +251,12 @@ function createArticleCard(article) {
     return card;
 }
 
-const reactionButtons = document.createElement('div');
-                reactionButtons.classList.add('reaction-buttons');
-
-                const heartButton = createReactionButton('heart', '❤️');
-                const likeButton = createReactionButton('like', '👍');
-                const thumbsDownButton = createReactionButton('thumbsDown', '👎');
-                const laughButton = createReactionButton('laugh', '😂');
-                const hundredButton = createReactionButton('hundred', '💯');
-
-                reactionButtons.appendChild(heartButton);
-                reactionButtons.appendChild(likeButton);
-                reactionButtons.appendChild(thumbsDownButton);
-                reactionButtons.appendChild(laughButton);
-                reactionButtons.appendChild(hundredButton);
-
-                // Create action buttons (share, bookmark, translate)
-                const actionButtons = document.createElement('div');
-                actionButtons.classList.add('action-buttons');
-
-                const shareButton = createActionButton('share', 'Share', 'fas fa-share-alt', shareArticle);
-                const bookmarkButton = createActionButton('bookmark', 'Save', 'far fa-bookmark', toggleBookmark);
-                const translateButton = createActionButton('translate', 'Translate to हिंदी', 'fas fa-language', translateCard);
-
-                actionButtons.appendChild(shareButton);
-                actionButtons.appendChild(bookmarkButton);
-                actionButtons.appendChild(translateButton);
-
-                // Append all the buttons to card actions
-                cardActions.appendChild(reactionButtons);
-                cardActions.appendChild(actionButtons);
-
-                // Create footer with source and time
-                const footer = document.createElement('div');
-                footer.classList.add('card-footer');
-
-                const timeDiv = document.createElement('div');
-                timeDiv.classList.add('time');
-                if (article.time) {
-                    timeDiv.innerHTML = `<i>Published: ${article.time}</i>`;
-                }
-
-                const sourceDiv = document.createElement('div');
-                sourceDiv.classList.add('source');
-                sourceDiv.innerHTML = `<a href="${article.link}" target="_blank">Read More @ </a>`;
-
-                // Append elements to card
-                cardContent.appendChild(headline);
-                cardContent.appendChild(summary);
-                cardContent.appendChild(cardActions);
-                footer.appendChild(timeDiv);
-                footer.appendChild(sourceDiv);
-                card.appendChild(img);
-                card.appendChild(cardContent);
-                card.appendChild(footer);
-
-                container.appendChild(card);
-            });
-        }
-
-        // Helper function to create reaction buttons
-        function createReactionButton(type, emoji) {
-            const button = document.createElement('button');
-            button.classList.add('reaction-button');
-            button.setAttribute('data-type', type);
-            button.onclick = () => react(button, emoji);
-            button.innerHTML = `${emoji} <span class="reaction-count">0</span>`;
-            return button;
-        }
-
-        // Helper function to create action buttons (Share, Bookmark, Translate)
-        function createActionButton(type, text, iconClass, actionFunction) {
-            const button = document.createElement('button');
-            button.classList.add('action-btn');
-            button.classList.add(type + '-btn');
-            button.innerHTML = `<i class="${iconClass}"></i> ${text}`;
-            button.onclick = actionFunction;
-            return button;
-        }
-
-        // Function to handle reactions
-        function react(button, emoji) {
-            const countSpan = button.querySelector('.reaction-count');
-            let count = parseInt(countSpan.innerText);
-            countSpan.innerText = count + 1;
-            console.log(`Reacted with: ${emoji}`);
-        }
-
-        // Function to handle sharing the article
-        function shareArticle(button) {
-            const card = button.closest('.card');
-            const link = card.querySelector('.source a').href;
-            alert(`Share this article: ${link}`);
-        }
-
-        // Function to handle bookmarking the article
-        function toggleBookmark(button) {
-            button.classList.toggle('bookmarked');
-            alert('Article saved to bookmarks!');
-        }
-
-        // Function to translate article (placeholder function)
-        function translateCard(button) {
-            const card = button.closest('.card');
-            alert(`Translating article: ${card.querySelector('.heado').innerText}`);
-        }
-
-        // Fetch articles on page load
-        window.onload = fetchArticles;
-        function setTheme(theme) {
-            const buttons = document.querySelectorAll('.theme-btn');
-            buttons.forEach(btn => btn.classList.remove('active'));
-            
-            if (theme === 'system') {
-                // Check system preference
-                if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-                    document.documentElement.setAttribute('data-theme', 'dark');
-                } else {
-                    document.documentElement.setAttribute('data-theme', 'light');
-                }
-                document.querySelector('.theme-btn:nth-child(3)').classList.add('active');
-            } else {
-                document.documentElement.setAttribute('data-theme', theme);
-                document.querySelector(`.theme-btn:nth-child(${theme === 'light' ? 1 : 2})`).classList.add('active');
-            }
-            
-            localStorage.setItem('theme-preference', theme);
-        }
-
-        // Initialize theme
-        function initializeTheme() {
-            const savedTheme = localStorage.getItem('theme-preference') || 'system';
-            setTheme(savedTheme);
-
-            // Listen for system theme changes
-            window.matchMedia('(prefers-color-scheme: dark)').addListener(() => {
-                if (localStorage.getItem('theme-preference') === 'system') {
-                    setTheme('system');
-                }
-            });
-        }
-
-        // Call initialize on page load
-        document.addEventListener('DOMContentLoaded', initializeTheme);
+// Search and Filter Functions
 function searchArticles() {
-    var query = document.getElementById("searchBar").value.toLowerCase();
-    var articles = document.querySelectorAll(".card");
+    const query = document.getElementById("searchBar").value.toLowerCase();
+    const articles = document.querySelectorAll(".card");
 
-    // Check if the query is empty
     if (query.trim() === "") {
-        // If the query is empty, show all articles and remove any highlights
         articles.forEach(function(card) {
             card.style.display = "flex";
             removeHighlights(card.querySelector("h3"));
@@ -411,14 +266,12 @@ function searchArticles() {
     }
 
     articles.forEach(function(card) {
-        var headline = card.getAttribute("data-headline").toLowerCase();
-        var summary = card.getAttribute("data-summary").toLowerCase();
+        const headline = card.getAttribute("data-headline").toLowerCase();
+        const summary = card.getAttribute("data-summary").toLowerCase();
 
-        // Remove any existing highlights
         removeHighlights(card.querySelector("h3"));
         removeHighlights(card.querySelector("p"));
 
-        // Check if the query matches the headline or summary
         if (headline.includes(query) || summary.includes(query)) {
             card.style.display = "flex";
             highlightText(card.querySelector("h3"), query);
@@ -430,91 +283,47 @@ function searchArticles() {
 }
 
 function highlightText(element, query) {
-    var text = element.textContent || element.innerText;
-    var regex = new RegExp('(' + query + ')', 'gi');
-    var highlightedText = text.replace(regex, '<span class="highlight">$1</span>');
+    if (!element) return;
+    const text = element.textContent || element.innerText;
+    const regex = new RegExp('(' + query + ')', 'gi');
+    const highlightedText = text.replace(regex, '<span class="highlight">$1</span>');
     element.innerHTML = highlightedText;
 }
 
 function removeHighlights(element) {
     if (element) {
-        // Remove any highlight spans
         element.innerHTML = element.textContent || element.innerText;
     }
 }
 
-
-
-
-
-    
-        // Run this after the page loads
-document.addEventListener('DOMContentLoaded', function() {
-    // Keep track of sources we've seen
-    const seenSources = new Set();
-    
-    // Get all cards
-    const cards = document.querySelectorAll('.card');
-    
-    // Add fire icon to first occurrence of each source
-    // Add animated icon for the first occurrence of each source
-// Add thunderbolt icon for the first occurrence of each source
-// Add animated icon for the first occurrence of each source
-cards.forEach(card => {
-    const source = card.getAttribute('data-source');
-    if (!seenSources.has(source)) {
-        // Add animated icon instead of the fire emoji
-        const animatedIcon = document.createElement('div');
-        animatedIcon.innerHTML = '<span class="trending-icon">🔥</span>';
-        animatedIcon.style.cssText = `
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            z-index: 2;
-        `;
-        card.appendChild(animatedIcon);
-        seenSources.add(source);
-    }
-});
-
-
-
-
-
-
-
-});
 let currentCategory = null;
 
 function filterByCategory(category) {
     const tabs = document.querySelectorAll('.tab');
     const backButton = document.getElementById('backButton');
 
-    // If clicking the same tab again, deactivate it
     if (currentCategory === category) {
         currentCategory = null;
         tabs.forEach(tab => {
             tab.classList.remove('active');
-            tab.style.boxShadow = '';  // Remove glow effect when not active
+            tab.style.boxShadow = '';
         });
-        // Show all articles
         document.querySelectorAll(".card").forEach(card => {
             card.style.display = "flex";
         });
-        backButton.style.display = "none";  // Hide back button when no category is selected
+        backButton.style.display = "none";
         return;
     }
 
-    currentCategory = category;  // Update current category
+    currentCategory = category;
 
-    // Update tab styling
     tabs.forEach(tab => {
         if (tab.textContent.toLowerCase() === category.toLowerCase()) {
             tab.classList.add('active');
-            tab.style.boxShadow = '0 0 10px 2px rgba(0, 86, 179, 0.6)';  // Add glow effect
+            tab.style.boxShadow = '0 0 10px 2px rgba(0, 86, 179, 0.6)';
         } else {
             tab.classList.remove('active');
-            tab.style.boxShadow = '';  // Remove glow effect from inactive tabs
+            tab.style.boxShadow = '';
         }
     });
 
@@ -528,7 +337,7 @@ function filterByCategory(category) {
             child.textContent.includes('🔥')
         );
 
-        card.style.display = "flex";  // Show all cards by default
+        card.style.display = "flex";
 
         switch(category) {
             case 'trending':
@@ -555,84 +364,23 @@ function filterByCategory(category) {
         }
     });
 
-    backButton.style.display = "block";  // Show back button when a category is selected
+    backButton.style.display = "block";
 }
 
 function goBack() {
-    // Show all articles
-    currentCategory = null;  // Reset current category
+    currentCategory = null;
     const tabs = document.querySelectorAll('.tab');
     tabs.forEach(tab => {
         tab.classList.remove('active');
-        tab.style.boxShadow = '';  // Remove glow effect when going back
+        tab.style.boxShadow = '';
     });
     document.querySelectorAll(".card").forEach(card => {
-        card.style.display = "flex";  // Show all cards again
+        card.style.display = "flex";
     });
-    document.getElementById('backButton').style.display = "none";  // Hide back button
+    document.getElementById('backButton').style.display = "none";
 }
-// Add to your existing JavaScript
-
-// Font Awesome CDN - Add this in your head section
-document.head.innerHTML += '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">';
 
 // Reaction System
-// Add this CSS at the start of your file
-const styles = `
-.reaction-button {
-    position: relative;
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 5px 10px;
-    transition: transform 0.2s;
-}
-
-.reaction-button.reacted {
-    color: #ff4b6e;
-    transform: scale(1.1);
-}
-
-.card {
-    position: relative;
-    overflow: hidden;  /* Ensure effects don't spill outside during animation */
-}
-
-.reaction-effect {
-    position: absolute;
-    pointer-events: none;
-    animation: floatUpAndFade 1.5s ease-out forwards;
-    opacity: 0;
-    font-size: 24px;  /* Larger emoji size */
-    z-index: 10;
-    transform-origin: center;
-}
-
-@keyframes floatUpAndFade {
-    0% {
-        transform: translateY(0) scale(0.5) rotate(-15deg);
-        opacity: 0;
-    }
-    10% {
-        opacity: 1;
-    }
-    100% {
-        transform: translateY(-200px) scale(1.5) rotate(15deg);
-        opacity: 0;
-    }
-}
-
-.reaction-count {
-    font-size: 0.9em;
-    margin-left: 4px;
-}`;
-
-// Add the styles to the document
-const styleSheet = document.createElement("style");
-styleSheet.textContent = styles;
-document.head.appendChild(styleSheet);
-
-// Initialize reaction counts for each card
 function initializeReactions() {
     const cards = document.querySelectorAll('.card');
     cards.forEach(card => {
@@ -658,58 +406,17 @@ function initializeReactions() {
     });
 }
 
-// Create floating effect elements spread across the card
-function createFloatingEffect(card, emoji, count) {
-    const cardRect = card.getBoundingClientRect();
-    const effectContainer = card;
-    
-    for (let i = 0; i < count; i++) {
-        setTimeout(() => {
-            const effect = document.createElement('span');
-            effect.className = 'reaction-effect';
-            effect.textContent = emoji;
-            
-            // Random starting position across the bottom of the card
-            const startX = Math.random() * (cardRect.width - 40);
-            const startY = cardRect.height - 60;
-            
-            // Random horizontal drift
-            const drift = (Math.random() - 0.5) * 100;
-            
-            effect.style.left = `${startX}px`;
-            effect.style.bottom = '60px';
-            
-            // Add some random rotation and scaling variation
-            const rotation = (Math.random() - 0.5) * 30;
-            const scale = 0.8 + Math.random() * 0.4;
-            const duration = 1 + Math.random() * 0.5;
-            
-            effect.style.animation = `floatUpAndFade ${duration}s ease-out forwards`;
-            effect.style.transform = `rotate(${rotation}deg) scale(${scale})`;
-            
-            effectContainer.appendChild(effect);
-            
-            // Remove the element after animation
-            setTimeout(() => effect.remove(), duration * 1000);
-        }, i * 100);
-    }
-}
-
-// Updated reaction function
 function react(button, emoji) {
     const card = button.closest('.card');
     const countSpan = button.querySelector('.reaction-count');
     const currentReaction = card.dataset.currentReaction;
     const type = button.dataset.type;
     
-    // If clicking the same reaction
     if (currentReaction === type) {
-        // Remove reaction
         button.classList.remove('reacted');
         countSpan.textContent = parseInt(countSpan.textContent) - 1;
         card.dataset.currentReaction = '';
     } else {
-        // If there was a previous reaction, decrease its count
         if (currentReaction) {
             const prevButton = card.querySelector(`[data-type="${currentReaction}"]`);
             const prevCount = prevButton.querySelector('.reaction-count');
@@ -717,25 +424,40 @@ function react(button, emoji) {
             prevCount.textContent = parseInt(prevCount.textContent) - 1;
         }
         
-        // Add new reaction
         button.classList.add('reacted');
         countSpan.textContent = parseInt(countSpan.textContent) + 1;
         card.dataset.currentReaction = type;
         
-        // Create floating effect across the card
-        createFloatingEffect(card, emoji, 12);
+        createFloatingEffect(card, emoji, 5);
     }
 }
 
-// Initialize reactions when the page loads
-document.addEventListener('DOMContentLoaded', initializeReactions);
+function createFloatingEffect(card, emoji, count) {
+    const cardRect = card.getBoundingClientRect();
+    
+    for (let i = 0; i < count; i++) {
+        setTimeout(() => {
+            const effect = document.createElement('span');
+            effect.className = 'reaction-effect';
+            effect.textContent = emoji;
+            
+            const startX = Math.random() * (cardRect.width - 40);
+            effect.style.left = `${startX}px`;
+            effect.style.bottom = '60px';
+            
+            const rotation = (Math.random() - 0.5) * 30;
+            const scale = 0.8 + Math.random() * 0.4;
+            
+            effect.style.transform = `rotate(${rotation}deg) scale(${scale})`;
+            
+            card.appendChild(effect);
+            
+            setTimeout(() => effect.remove(), 1000);
+        }, i * 100);
+    }
+}
 
-
-
-
-// Initialize reactions when the page loads
-document.addEventListener('DOMContentLoaded', initializeReactions);
-// Share Article
+// Share and Bookmark Functions
 function shareArticle(button) {
     const card = button.closest('.card');
     const headline = card.querySelector('h3').textContent;
@@ -746,10 +468,8 @@ function shareArticle(button) {
             title: headline,
             text: summary,
             url: window.location.href
-        })
-        .catch(console.error);
+        }).catch(console.error);
     } else {
-        // Fallback for browsers that don't support Web Share API
         const dummy = document.createElement('textarea');
         dummy.value = `${headline}\n\n${summary}\n\n${window.location.href}`;
         document.body.appendChild(dummy);
@@ -760,7 +480,6 @@ function shareArticle(button) {
     }
 }
 
-// Bookmark System
 function toggleBookmark(button) {
     button.classList.toggle('bookmarked');
     const icon = button.querySelector('i');
@@ -771,552 +490,32 @@ function toggleBookmark(button) {
     }
 }
 
-// Translation Function (using Google Translate API)
+// Translation Function
 function translateCard(button) {
     const card = button.closest('.card');
     const headline = card.querySelector('h3');
     const summary = card.querySelector('p');
     
     if (!card.dataset.translated) {
-        // This is a simplified version. In a real app, you'd want to use a translation API
-        fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=hi&dt=t&q=${encodeURIComponent(headline.textContent + '. ' + summary.textContent)}`)
-            .then(response => response.json())
-            .then(data => {
-                const translatedText = data[0].map(x => x[0]).join(' ');
-                const [translatedHeadline, ...translatedSummaryParts] = translatedText.split('।');
-                
-                headline.dataset.original = headline.textContent;
-                summary.dataset.original = summary.textContent;
-                
-                headline.textContent = translatedHeadline;
-                summary.textContent = translatedSummaryParts.join('।');
-                
-                card.dataset.translated = 'true';
-                button.textContent = 'English';
-            });
+        // In a real app, you would use a translation API here
+        alert('Translation functionality would be implemented with a real translation API');
+        button.textContent = 'English';
+        card.dataset.translated = 'true';
     } else {
-        headline.textContent = headline.dataset.original;
-        summary.textContent = summary.dataset.original;
-        delete card.dataset.translated;
         button.textContent = 'हिंदी';
+        delete card.dataset.translated;
     }
 }
+
+function retryLoading() {
+    loadArticles();
+}
+
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', () => {
     initializeTheme();
     loadArticles();
 });
-//        async function loadArticles() {
-//             const loadingContainer = document.getElementById('loadingContainer');
-//             const errorContainer = document.getElementById('errorContainer');
-//             const articlesContainer = document.getElementById('articlesContainer');
-            
-//             try {
-//                 // Show loading, hide error
-//                 loadingContainer.style.display = 'block';
-//                 errorContainer.style.display = 'none';
-//                 articlesContainer.innerHTML = '';
-                
-//                 // Add timestamp to prevent caching
-//                 const timestamp = new Date().getTime();
-//                 const response = await fetch(`/api/articles?t=${timestamp}`, {
-//                     method: 'GET',
-//                     headers: {
-//                         'Accept': 'application/json',
-//                         'Cache-Control': 'no-cache'
-//                     }
-//                 });
-                
-//                 if (!response.ok) {
-//                     throw new Error(`HTTP error! status: ${response.status}`);
-//                 }
-                
-//                 const result = await response.json();
-                
-//                 if (result.status === 'error') {
-//                     throw new Error(result.message || 'Failed to load articles');
-//                 }
-                
-//                 const articles = result.data;
-                
-//                 if (!articles || articles.length === 0) {
-//                     throw new Error('No articles available');
-//                 }
-                
-//                 // Hide loading container
-//                 loadingContainer.style.display = 'none';
-                
-//                 // Create and append article cards
-//                 articles.forEach(article => {
-//                     const card = createArticleCard(article);
-//                     articlesContainer.appendChild(card);
-//                 });
-                
-//                 // Initialize reactions after loading articles
-//                 initializeReactions();
-                
-//             } catch (error) {
-//                 console.error('Error loading articles:', error);
-//                 loadingContainer.style.display = 'none';
-//                 errorContainer.style.display = 'block';
-//                 document.getElementById('errorMessage').textContent = 
-//                     `Error loading articles: ${error.message}. Please try again.`;
-//             }
-//         }
-
-//         function retryLoading() {
-//             loadArticles();
-//         }
-
-//         // Rest of your createArticleCard function and other functions remain the same...
-        
-//         // Load articles when the page loads
-//         document.addEventListener('DOMContentLoaded', loadArticles);
-
-//         // Load articles when the page loads
-//         document.addEventListener('DOMContentLoaded', loadArticles);
-//         function setTheme(theme) {
-//             const buttons = document.querySelectorAll('.theme-btn');
-//             buttons.forEach(btn => btn.classList.remove('active'));
-            
-//             if (theme === 'system') {
-//                 // Check system preference
-//                 if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-//                     document.documentElement.setAttribute('data-theme', 'dark');
-//                 } else {
-//                     document.documentElement.setAttribute('data-theme', 'light');
-//                 }
-//                 document.querySelector('.theme-btn:nth-child(3)').classList.add('active');
-//             } else {
-//                 document.documentElement.setAttribute('data-theme', theme);
-//                 document.querySelector(`.theme-btn:nth-child(${theme === 'light' ? 1 : 2})`).classList.add('active');
-//             }
-            
-//             localStorage.setItem('theme-preference', theme);
-//         }
-
-//         // Initialize theme
-//         function initializeTheme() {
-//             const savedTheme = localStorage.getItem('theme-preference') || 'system';
-//             setTheme(savedTheme);
-
-//             // Listen for system theme changes
-//             window.matchMedia('(prefers-color-scheme: dark)').addListener(() => {
-//                 if (localStorage.getItem('theme-preference') === 'system') {
-//                     setTheme('system');
-//                 }
-//             });
-//         }
-
-//         // Call initialize on page load
-//         document.addEventListener('DOMContentLoaded', initializeTheme);
-// function searchArticles() {
-//     var query = document.getElementById("searchBar").value.toLowerCase();
-//     var articles = document.querySelectorAll(".card");
-
-//     // Check if the query is empty
-//     if (query.trim() === "") {
-//         // If the query is empty, show all articles and remove any highlights
-//         articles.forEach(function(card) {
-//             card.style.display = "flex";
-//             removeHighlights(card.querySelector("h3"));
-//             removeHighlights(card.querySelector("p"));
-//         });
-//         return;
-//     }
-
-//     articles.forEach(function(card) {
-//         var headline = card.getAttribute("data-headline").toLowerCase();
-//         var summary = card.getAttribute("data-summary").toLowerCase();
-
-//         // Remove any existing highlights
-//         removeHighlights(card.querySelector("h3"));
-//         removeHighlights(card.querySelector("p"));
-
-//         // Check if the query matches the headline or summary
-//         if (headline.includes(query) || summary.includes(query)) {
-//             card.style.display = "flex";
-//             highlightText(card.querySelector("h3"), query);
-//             highlightText(card.querySelector("p"), query);
-//         } else {
-//             card.style.display = "none";
-//         }
-//     });
-// }
-
-// function highlightText(element, query) {
-//     var text = element.textContent || element.innerText;
-//     var regex = new RegExp('(' + query + ')', 'gi');
-//     var highlightedText = text.replace(regex, '<span class="highlight">$1</span>');
-//     element.innerHTML = highlightedText;
-// }
-
-// function removeHighlights(element) {
-//     if (element) {
-//         // Remove any highlight spans
-//         element.innerHTML = element.textContent || element.innerText;
-//     }
-// }
-
-
-
-
-
-    
-//         // Run this after the page loads
-// document.addEventListener('DOMContentLoaded', function() {
-//     // Keep track of sources we've seen
-//     const seenSources = new Set();
-    
-//     // Get all cards
-//     const cards = document.querySelectorAll('.card');
-    
-//     // Add fire icon to first occurrence of each source
-//     // Add animated icon for the first occurrence of each source
-// // Add thunderbolt icon for the first occurrence of each source
-// // Add animated icon for the first occurrence of each source
-// cards.forEach(card => {
-//     const source = card.getAttribute('data-source');
-//     if (!seenSources.has(source)) {
-//         // Add animated icon instead of the fire emoji
-//         const animatedIcon = document.createElement('div');
-//         animatedIcon.innerHTML = '<span class="trending-icon">🔥</span>';
-//         animatedIcon.style.cssText = `
-//             position: absolute;
-//             top: 10px;
-//             right: 10px;
-//             z-index: 2;
-//         `;
-//         card.appendChild(animatedIcon);
-//         seenSources.add(source);
-//     }
-// });
-
-
-
-
-
-
-
-// });
-// let currentCategory = null;
-
-// function filterByCategory(category) {
-//     const tabs = document.querySelectorAll('.tab');
-//     const backButton = document.getElementById('backButton');
-
-//     // If clicking the same tab again, deactivate it
-//     if (currentCategory === category) {
-//         currentCategory = null;
-//         tabs.forEach(tab => {
-//             tab.classList.remove('active');
-//             tab.style.boxShadow = '';  // Remove glow effect when not active
-//         });
-//         // Show all articles
-//         document.querySelectorAll(".card").forEach(card => {
-//             card.style.display = "flex";
-//         });
-//         backButton.style.display = "none";  // Hide back button when no category is selected
-//         return;
-//     }
-
-//     currentCategory = category;  // Update current category
-
-//     // Update tab styling
-//     tabs.forEach(tab => {
-//         if (tab.textContent.toLowerCase() === category.toLowerCase()) {
-//             tab.classList.add('active');
-//             tab.style.boxShadow = '0 0 10px 2px rgba(0, 86, 179, 0.6)';  // Add glow effect
-//         } else {
-//             tab.classList.remove('active');
-//             tab.style.boxShadow = '';  // Remove glow effect from inactive tabs
-//         }
-//     });
-
-//     var articles = document.querySelectorAll(".card");
-
-//     articles.forEach(function(card) {
-//         var headline = card.getAttribute("data-headline").toLowerCase();
-//         var summary = card.getAttribute("data-summary").toLowerCase();
-//         var source = card.getAttribute("data-source").toLowerCase();
-//         var hasFire = Array.from(card.children).some(child => 
-//             child.textContent.includes('🔥')
-//         );
-
-//         card.style.display = "flex";  // Show all cards by default
-
-//         switch(category) {
-//             case 'trending':
-//                 card.style.display = hasFire ? "flex" : "none";
-//                 break;
-//             case 'gst':
-//                 if (!headline.includes("gst") && !summary.includes("gst")) {
-//                     card.style.display = "none";
-//                 }
-//                 break;
-//             case 'indian economy':
-//                 if (!headline.includes("india") && !summary.includes("india") && 
-//                     !headline.includes("nirmala sitharaman") && !summary.includes("nirmala sitharaman")) {
-//                     card.style.display = "none";
-//                 }
-//                 break;
-//             case 'global':
-//                 if (!headline.includes("donald trump") && !summary.includes("donald trump") && 
-//                     !headline.includes("us") && !summary.includes("us") && 
-//                     !headline.includes("america") && !summary.includes("america")) {
-//                     card.style.display = "none";
-//                 }
-//                 break;
-//         }
-//     });
-
-//     backButton.style.display = "block";  // Show back button when a category is selected
-// }
-
-// function goBack() {
-//     // Show all articles
-//     currentCategory = null;  // Reset current category
-//     const tabs = document.querySelectorAll('.tab');
-//     tabs.forEach(tab => {
-//         tab.classList.remove('active');
-//         tab.style.boxShadow = '';  // Remove glow effect when going back
-//     });
-//     document.querySelectorAll(".card").forEach(card => {
-//         card.style.display = "flex";  // Show all cards again
-//     });
-//     document.getElementById('backButton').style.display = "none";  // Hide back button
-// }
-// // Add to your existing JavaScript
-
-// // Font Awesome CDN - Add this in your head section
-// document.head.innerHTML += '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">';
-
-// // Reaction System
-// // Add this CSS at the start of your file
-// const styles = `
-// .reaction-button {
-//     position: relative;
-//     background: none;
-//     border: none;
-//     cursor: pointer;
-//     padding: 5px 10px;
-//     transition: transform 0.2s;
-// }
-
-// .reaction-button.reacted {
-//     color: #ff4b6e;
-//     transform: scale(1.1);
-// }
-
-// .card {
-//     position: relative;
-//     overflow: hidden;  /* Ensure effects don't spill outside during animation */
-// }
-
-// .reaction-effect {
-//     position: absolute;
-//     pointer-events: none;
-//     animation: floatUpAndFade 1.5s ease-out forwards;
-//     opacity: 0;
-//     font-size: 24px;  /* Larger emoji size */
-//     z-index: 10;
-//     transform-origin: center;
-// }
-
-// @keyframes floatUpAndFade {
-//     0% {
-//         transform: translateY(0) scale(0.5) rotate(-15deg);
-//         opacity: 0;
-//     }
-//     10% {
-//         opacity: 1;
-//     }
-//     100% {
-//         transform: translateY(-200px) scale(1.5) rotate(15deg);
-//         opacity: 0;
-//     }
-// }
-
-// .reaction-count {
-//     font-size: 0.9em;
-//     margin-left: 4px;
-// }`;
-
-// // Add the styles to the document
-// const styleSheet = document.createElement("style");
-// styleSheet.textContent = styles;
-// document.head.appendChild(styleSheet);
-
-// // Initialize reaction counts for each card
-// function initializeReactions() {
-//     const cards = document.querySelectorAll('.card');
-//     cards.forEach(card => {
-//         if (!card.dataset.reactionsInitialized) {
-//             const defaultCounts = {
-//                 heart: Math.floor(Math.random() * 50) + 10,
-//                 like: Math.floor(Math.random() * 40) + 5,
-//                 thumbsDown: Math.floor(Math.random() * 20) + 5,
-//                 laugh: Math.floor(Math.random() * 30) + 5,
-//                 hundred: Math.floor(Math.random() * 25) + 5
-//             };
-            
-//             card.dataset.reactionsInitialized = 'true';
-//             card.dataset.currentReaction = '';
-            
-//             const reactionButtons = card.querySelectorAll('.reaction-button');
-//             reactionButtons.forEach(button => {
-//                 const type = button.dataset.type;
-//                 const countSpan = button.querySelector('.reaction-count');
-//                 countSpan.textContent = defaultCounts[type];
-//             });
-//         }
-//     });
-// }
-
-// // Create floating effect elements spread across the card
-// function createFloatingEffect(card, emoji, count) {
-//     const cardRect = card.getBoundingClientRect();
-//     const effectContainer = card;
-    
-//     for (let i = 0; i < count; i++) {
-//         setTimeout(() => {
-//             const effect = document.createElement('span');
-//             effect.className = 'reaction-effect';
-//             effect.textContent = emoji;
-            
-//             // Random starting position across the bottom of the card
-//             const startX = Math.random() * (cardRect.width - 40);
-//             const startY = cardRect.height - 60;
-            
-//             // Random horizontal drift
-//             const drift = (Math.random() - 0.5) * 100;
-            
-//             effect.style.left = `${startX}px`;
-//             effect.style.bottom = '60px';
-            
-//             // Add some random rotation and scaling variation
-//             const rotation = (Math.random() - 0.5) * 30;
-//             const scale = 0.8 + Math.random() * 0.4;
-//             const duration = 1 + Math.random() * 0.5;
-            
-//             effect.style.animation = `floatUpAndFade ${duration}s ease-out forwards`;
-//             effect.style.transform = `rotate(${rotation}deg) scale(${scale})`;
-            
-//             effectContainer.appendChild(effect);
-            
-//             // Remove the element after animation
-//             setTimeout(() => effect.remove(), duration * 1000);
-//         }, i * 100);
-//     }
-// }
-
-// // Updated reaction function
-// function react(button, emoji) {
-//     const card = button.closest('.card');
-//     const countSpan = button.querySelector('.reaction-count');
-//     const currentReaction = card.dataset.currentReaction;
-//     const type = button.dataset.type;
-    
-//     // If clicking the same reaction
-//     if (currentReaction === type) {
-//         // Remove reaction
-//         button.classList.remove('reacted');
-//         countSpan.textContent = parseInt(countSpan.textContent) - 1;
-//         card.dataset.currentReaction = '';
-//     } else {
-//         // If there was a previous reaction, decrease its count
-//         if (currentReaction) {
-//             const prevButton = card.querySelector(`[data-type="${currentReaction}"]`);
-//             const prevCount = prevButton.querySelector('.reaction-count');
-//             prevButton.classList.remove('reacted');
-//             prevCount.textContent = parseInt(prevCount.textContent) - 1;
-//         }
-        
-//         // Add new reaction
-//         button.classList.add('reacted');
-//         countSpan.textContent = parseInt(countSpan.textContent) + 1;
-//         card.dataset.currentReaction = type;
-        
-//         // Create floating effect across the card
-//         createFloatingEffect(card, emoji, 12);
-//     }
-// }
-
-// // Initialize reactions when the page loads
-// document.addEventListener('DOMContentLoaded', initializeReactions);
-
-
-
-
-// // Initialize reactions when the page loads
-// document.addEventListener('DOMContentLoaded', initializeReactions);
-// // Share Article
-// function shareArticle(button) {
-//     const card = button.closest('.card');
-//     const headline = card.querySelector('h3').textContent;
-//     const summary = card.querySelector('p').textContent;
-    
-//     if (navigator.share) {
-//         navigator.share({
-//             title: headline,
-//             text: summary,
-//             url: window.location.href
-//         })
-//         .catch(console.error);
-//     } else {
-//         // Fallback for browsers that don't support Web Share API
-//         const dummy = document.createElement('textarea');
-//         dummy.value = `${headline}\n\n${summary}\n\n${window.location.href}`;
-//         document.body.appendChild(dummy);
-//         dummy.select();
-//         document.execCommand('copy');
-//         document.body.removeChild(dummy);
-//         alert('Link copied to clipboard!');
-//     }
-// }
-
-// // Bookmark System
-// function toggleBookmark(button) {
-//     button.classList.toggle('bookmarked');
-//     const icon = button.querySelector('i');
-//     if (button.classList.contains('bookmarked')) {
-//         icon.classList.replace('far', 'fas');
-//     } else {
-//         icon.classList.replace('fas', 'far');
-//     }
-// }
-
-// // Translation Function (using Google Translate API)
-// function translateCard(button) {
-//     const card = button.closest('.card');
-//     const headline = card.querySelector('h3');
-//     const summary = card.querySelector('p');
-    
-//     if (!card.dataset.translated) {
-//         // This is a simplified version. In a real app, you'd want to use a translation API
-//         fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=hi&dt=t&q=${encodeURIComponent(headline.textContent + '. ' + summary.textContent)}`)
-//             .then(response => response.json())
-//             .then(data => {
-//                 const translatedText = data[0].map(x => x[0]).join(' ');
-//                 const [translatedHeadline, ...translatedSummaryParts] = translatedText.split('।');
-                
-//                 headline.dataset.original = headline.textContent;
-//                 summary.dataset.original = summary.textContent;
-                
-//                 headline.textContent = translatedHeadline;
-//                 summary.textContent = translatedSummaryParts.join('।');
-                
-//                 card.dataset.translated = 'true';
-//                 button.textContent = 'English';
-//             });
-//     } else {
-//         headline.textContent = headline.dataset.original;
-//         summary.textContent = summary.dataset.original;
-//         delete card.dataset.translated;
-//         button.textContent = 'हिंदी';
-//     }
-// }
-
     </script>
 </body>
 </html>   
