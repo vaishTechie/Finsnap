@@ -20,7 +20,7 @@ def make_request(url, headers=None):
         print(f"Error fetching URL {url}: {str(e)}")
         return None
 
-# Simple summarizer: Truncate the content to the first 500 characters
+# Simple summarizer
 def summarize_article_simple(content, char_limit=500):
     return content[:char_limit]
 
@@ -68,78 +68,120 @@ def scrape_news18_articles():
             })
     return articles
 
-# Hindu Business Line Scraper Functions
-def clean_article_content(content):
-    # Remove extra whitespace and normalize spacing
-    content = re.sub(r'\s+', ' ', content)
-    return content.strip()
-
-def fetch_hindu_article_details(url):
-    soup = make_request(url)
+# Financial Express Scraper Functions
+def scrape_financial_article_content(article_url):
+    soup = make_request(article_url)
     if not soup:
         return None, None, None
     
-    paragraphs = soup.find_all('p')
-    article_content = " ".join([p.get_text(strip=True) for p in paragraphs if p.get_text(strip=True)])
-    article_content = clean_article_content(article_content)
+    article_section = soup.find('div', class_='article-section')
+    time_tag = soup.find('time', class_='entry-date published')
+    article_time = time_tag.get_text(strip=True) if time_tag else "Unknown"
     
-    time_tag = soup.find('div', class_='bl-by-line')
-    time = time_tag.get_text(strip=True).split('|')[0].strip() if time_tag else "Unknown"
+    image_div = soup.find('div', class_='image-with-overlay')
+    article_image = image_div.find('img')['src'] if image_div and image_div.find('img') else None
     
-    image_div = soup.find('div', class_='picture-big ratio ratio-16x9')
-    image_url = None
-    if image_div:
-        source_tags = image_div.find_all('source')
-        if source_tags:
-            largest_image_url = source_tags[-1].get('srcset')
-            if largest_image_url and not largest_image_url.startswith('http'):
-                largest_image_url = 'https://bl-i.thgim.com' + largest_image_url
-            image_url = largest_image_url
-            
-    return article_content, time, image_url
+    if article_section:
+        content_div = article_section.find('div', class_='post-content wp-block-post-content mb-4')
+        if content_div:
+            pcl_container = content_div.find('div', class_='pcl-container')
+            if pcl_container:
+                paragraphs = pcl_container.find_all('p')
+                article_text = ' '.join([para.get_text() for para in paragraphs])
+                return article_text, article_time, article_image
+    
+    return None, None, None
 
-def scrape_hindu_articles():
-    url = "https://www.thehindubusinessline.com/economy/"
+def scrape_financial_articles():
+    url = 'https://www.financialexpress.com/about/economy/'
     soup = make_request(url)
     if not soup:
         return []
     
-    headlines_list = soup.find("ul", class_="section-result-list")
     articles = []
+    article_items = soup.find_all('article', id=True)[:8]
     
-    if headlines_list:
-        for item in headlines_list.find_all("li", itemprop="itemListElement")[:8]:
-            headline_tag = item.find("h3", class_="title")
-            link_tag = item.find("a", itemprop="url")
+    for article in article_items:
+        entry_wrapper = article.find('div', class_='entry-wrapper')
+        if entry_wrapper:
+            entry_title_div = entry_wrapper.find('div', class_='entry-title')
+            headline_tag = entry_title_div.find('a') if entry_title_div else None
             
-            if headline_tag and link_tag:
+            if headline_tag:
                 headline = headline_tag.get_text(strip=True)
-                link = link_tag['href']
-                if not link.startswith("http"):
-                    link = "https://www.thehindubusinessline.com" + link
+                link = headline_tag['href']
+                article_content, article_time, article_image = scrape_financial_article_content(link)
                 
-                article_content, time, image_url = fetch_hindu_article_details(link)
                 if article_content:
-                    summary = summarize_article_simple(article_content)  # Using simple summarization
+                    summary = summarize_article_simple(article_content)
                     articles.append({
                         "headline": headline,
                         "link": link,
+                        "time": article_time,
                         "summary": summary,
-                        "time": time,
-                        "image": image_url,
-                        "source": "The Hindu Business Line"
+                        "source": "Financial Express",
+                        "image": article_image
                     })
+    return articles
+
+# LiveMint Scraper Functions
+def scrape_mint_article_content(article_url):
+    soup = make_request(article_url)
+    if not soup:
+        return None, None, None
+    
+    paragraphs = soup.find_all("p")
+    article_text = " ".join([p.text.strip() for p in paragraphs])
+    
+    time_elem = soup.find("span", {"id": lambda x: x and x.startswith("tListBox_")})
+    article_time = time_elem.text.strip() if time_elem else "Unknown"
+    
+    figure_tag = soup.find("figure")
+    article_image = figure_tag.find("img")['src'] if figure_tag and figure_tag.find("img") else None
+    
+    return article_text, article_time, article_image
+
+def scrape_mint_articles():
+    url = "https://www.livemint.com/economy"
+    soup = make_request(url)
+    if not soup:
+        return []
+    
+    articles = []
+    article_items = soup.find_all("div", class_="listingNew")[:8]
+    
+    for item in article_items:
+        title_elem = item.find("h2")
+        link_elem = item.find("a", href=True)
+        
+        if title_elem and link_elem:
+            headline = title_elem.text.strip()
+            link = "https://www.livemint.com" + link_elem["href"]
+            article_content, article_time, article_image = scrape_mint_article_content(link)
+            
+            if article_content:
+                summary = summarize_article_simple(article_content)
+                articles.append({
+                    "headline": headline,
+                    "link": link,
+                    "time": article_time,
+                    "summary": summary,
+                    "source": "LiveMint",
+                    "image": article_image
+                })
     return articles
 
 # Flask Routes
 @app.route('/')
 def index():
-    # Fetch articles from both sources
+    # Fetch articles from all sources
     news18_articles = scrape_news18_articles()
     hindu_articles = scrape_hindu_articles()
+    financial_articles = scrape_financial_articles()
+    mint_articles = scrape_mint_articles()
     
     # Combine all articles
-    all_articles = news18_articles + hindu_articles
+    all_articles = news18_articles + hindu_articles + financial_articles + mint_articles
     
     # Render the HTML template with all articles
     return render_template('index.html', articles=all_articles)
