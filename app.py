@@ -1,4 +1,5 @@
 
+import os
 from flask import Flask, jsonify, render_template
 import requests
 from bs4 import BeautifulSoup
@@ -8,10 +9,7 @@ from sumy.nlp.tokenizers import Tokenizer
 from sumy.summarizers.lex_rank import LexRankSummarizer
 from sumy.summarizers.lsa import LsaSummarizer
 from sumy.utils import get_stop_words
-import nltk
 import random
-
-nltk.download('punkt_tab')
 
 
 
